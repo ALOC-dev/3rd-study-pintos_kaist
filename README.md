@@ -4,12 +4,12 @@ pintos-kaist는 KAIST(한국과학기술원)의 운영체제 과목(CS330)을 �
 스탠포드 대학의 원본 Pintos를 기반으로, 실습 중심의 과제를 효과적으로 수행할 수 있도록 다양한 기능과 도구가 추가되었습니다.
 
 pintos-kaist를 통해 운영체제의 다음과 같은 핵심 개념을 실제로 구현하며 학습합니다:
--스레드 및 스케줄링
--시스템 콜 인터페이스
--ELF 실행 파일 로딩
--파일 시스템 관리
--가상 메모리 및 페이지 스와핑
--Lazy loading 및 memory-mapped file 처리
+- 스레드 및 스케줄링
+- 시스템 콜 인터페이스
+- ELF 실행 파일 로딩
+- 파일 시스템 관리
+- 가상 메모리 및 페이지 스와핑
+- Lazy loading 및 memory-mapped file 처리
 
 ***
 - PROJECT 1 - THREADS
