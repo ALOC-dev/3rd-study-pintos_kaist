@@ -88,13 +88,19 @@ timer_elapsed (int64_t then) {
 }
 
 /* Suspends execution for approximately TICKS timer ticks. */
+//
+
+
+//[alarm clock] start value를 사용하지 않고 구현하기
+//매번 반복문 마다 계산해야되는 방식을 절대시간 계산형식으로 변환함.(wakeup_tick)
 void
 timer_sleep (int64_t ticks) {
-	int64_t start = timer_ticks ();
+	if(ticks<=0) return;
+
+	int64_t wakeup_tick=timer_ticks() + ticks;
 
 	ASSERT (intr_get_level () == INTR_ON);
-	while (timer_elapsed (start) < ticks)
-		thread_yield ();
+	thread_sleep(wakeup_tick);
 }
 
 /* Suspends execution for approximately MS milliseconds. */
