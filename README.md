@@ -12,14 +12,14 @@ pintos-kaist를 통해 운영체제의 다음과 같은 핵심 개념을 실제�
 - Lazy loading 및 memory-mapped file 처리
 
 ***
-- PROJECT 1 - THREADS
+- PROJECT 1 - THREADS  
     ✅ Alarm Clock  
     🔳 Priority Scheduling  
     🔳 Advanced Scheduler (Extra)  
     🚀 Result : 
 
 
-- PROJECT 2 - USER PROGRAMS
+- PROJECT 2 - USER PROGRAMS  
     🔳 Argument Passing  
     🔳 User Memory Access  
     🔳 System Calls  
@@ -29,7 +29,7 @@ pintos-kaist를 통해 운영체제의 다음과 같은 핵심 개념을 실제�
     🚀 Result : 
 
 
-- PROJECT 3 - VIRTUAL MEMORY
+- PROJECT 3 - VIRTUAL MEMORY  
     🔳 Memory Management  
     🔳 Stack Growth  
     🔳 Memory Mapped Files  
@@ -38,7 +38,7 @@ pintos-kaist를 통해 운영체제의 다음과 같은 핵심 개념을 실제�
     🚀 Result : 
 
 
-- PROJECT 4 - FILE SYSTEM (Extra)
+- PROJECT 4 - FILE SYSTEM (Extra)  
     🔳 Persistence Check (Introduction) [^PERS]  
     🔳 Indexed and Extensible Files  
     🔳 Subdirectories and Soft Links  
