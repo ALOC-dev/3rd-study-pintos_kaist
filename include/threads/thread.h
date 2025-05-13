@@ -94,6 +94,7 @@ struct thread {
 
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
+	int64_t wakeup_tick;
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
@@ -132,6 +133,9 @@ const char *thread_name (void);
 
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
+
+void thread_sleep(int64_t);
+void check_sleep_list(int64_t);
 
 int thread_get_priority (void);
 void thread_set_priority (int);
