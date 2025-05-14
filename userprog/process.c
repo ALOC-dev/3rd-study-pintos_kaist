@@ -168,12 +168,14 @@ process_exec (void *f_name) {
 	/* We cannot use the intr_frame in the thread structure.
 	 * This is because when current thread rescheduled,
 	 * it stores the execution information to the member. */
+	//초기 레지스터 값을 담을 구조체 _if
 	struct intr_frame _if;
 	_if.ds = _if.es = _if.ss = SEL_UDSEG;
 	_if.cs = SEL_UCSEG;
 	_if.eflags = FLAG_IF | FLAG_MBS;
 
 	/* We first kill the current context */
+	//현재 커널 스레드에 존재하던 이전 프로세스 정보를 모두 제거
 	process_cleanup ();
 
 	/* And then load the binary */
@@ -182,7 +184,7 @@ process_exec (void *f_name) {
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
 	if (!success)
-		return -1;
+		return -1; //thread_exit() 
 
 	/* Start switched process. */
 	do_iret (&_if);
@@ -330,12 +332,14 @@ load (const char *file_name, struct intr_frame *if_) {
 	int i;
 
 	/* Allocate and activate page directory. */
+	//페이지 테이블 생성 
 	t->pml4 = pml4_create ();
 	if (t->pml4 == NULL)
 		goto done;
-	process_activate (thread_current ());
+	process_activate (thread_current ()); //현재 스레드의 페이지 테이블을 cpu에 등록
 
 	/* Open executable file. */
+	//파일시스템에서 ,file name을 기반으로, file을 open
 	file = filesys_open (file_name);
 	if (file == NULL) {
 		printf ("load: %s: open failed\n", file_name);
@@ -355,6 +359,7 @@ load (const char *file_name, struct intr_frame *if_) {
 	}
 
 	/* Read program headers. */
+	//ELF 헤더 읽기 및 검증
 	file_ofs = ehdr.e_phoff;
 	for (i = 0; i < ehdr.e_phnum; i++) {
 		struct Phdr phdr;
@@ -408,10 +413,12 @@ load (const char *file_name, struct intr_frame *if_) {
 	}
 
 	/* Set up stack. */
+	//사용자 스택 초기화
 	if (!setup_stack (if_))
 		goto done;
 
 	/* Start address. */
+	//프로그램 시작지점 설정
 	if_->rip = ehdr.e_entry;
 
 	/* TODO: Your code goes here.
@@ -421,6 +428,7 @@ load (const char *file_name, struct intr_frame *if_) {
 
 done:
 	/* We arrive here whether the load is successful or not. */
+	//종료 및 리턴
 	file_close (file);
 	return success;
 }
