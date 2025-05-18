@@ -1,3 +1,5 @@
+#define USERPROG
+
 #include "userprog/process.h"
 #include <debug.h>
 #include <inttypes.h>
@@ -23,7 +25,8 @@
 #endif
 
 static void process_cleanup (void);
-static bool load (const char *file_name, struct intr_frame *if_);
+//argc, argv 인자를 받을 수 있게 수정
+static bool load(const char *file_name, struct intr_frame *if_);
 static void initd (void *f_name);
 static void __do_fork (void *);
 
@@ -50,6 +53,11 @@ process_create_initd (const char *file_name) {
 	if (fn_copy == NULL)
 		return TID_ERROR;
 	strlcpy (fn_copy, file_name, PGSIZE);
+
+	//기존의 방식으로는, file_name이 문자열형태로 들어오게된다.
+	//따라서, command line을 parsing해서 문자열의 첫번째 token만 추출한다.
+	char *save_ptr;
+	strtok_r(file_name, " ", &save_ptr);
 
 	/* Create a new thread to execute FILE_NAME. */
 	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy); //이전방식은 커맨드라인 string전체가 들어갔는데, 이제는 첫번째 토큰만 tokenizing해서 넘어감
@@ -169,7 +177,9 @@ process_exec (void *f_name) {
 	/* We cannot use the intr_frame in the thread structure.
 	 * This is because when current thread rescheduled,
 	 * it stores the execution information to the member. */
-	//초기 레지스터 값을 담을 구조체 _if
+
+
+	//intr_frame 생성
 	struct intr_frame _if;
 	_if.ds = _if.es = _if.ss = SEL_UDSEG;
 	_if.cs = SEL_UCSEG;
@@ -179,18 +189,76 @@ process_exec (void *f_name) {
 	//현재 커널 스레드에 존재하던 이전 프로세스 정보를 모두 제거
 	process_cleanup ();
 
+	//[구현]argument parsing
+	char *argv[64];	//인자는 최대 64개까지만 받음. 64개의 요소를 갖는 배열에 포인터가 들어간다.
+	int argc =0; //인자 개수 0으로 초기화
+	//__strtok_r: 문자열을 토큰단위로 분리해줄때 사용하는 함수
+	//strtok_r(시작값,구분자,끝값) :시작포인터부터 구분자까지 잘라라
+	char *save_ptr;
+	for(char *token=strtok_r(file_name," ",&save_ptr);token!=NULL;token=strtok_r(NULL," ",&save_ptr)){
+		argv[argc++]=token;
+	}
+
 	/* And then load the binary */
-	success = load (file_name, &_if);
+	//[구현]argc, argv받는 꼴로 수정
+	//file name은 argv의 첫번째 인자.
+	success = load(argv[0], &_if);
 
 	/* If load failed, quit. */
-	palloc_free_page (file_name);
-	if (!success)
-		return -1; //thread_exit() 
+	if (!success){
+		palloc_free_page (file_name);
+		return -1;
+	}
+	argument_stack(argv,argc,&_if.rsp);
+	_if.R.rdi=argc;//첫번째 인자 argc
+	_if.R.rsi=(char *)_if.rsp+8;//두번째인자 argv
 
+	hex_dump(_if.rsp, _if.rsp,USER_STACK - (uint64_t)_if.rsp, true);//user stack을 16진수로 프린트
+
+	palloc_free_page(file_name);
+	if(!success)
+		return -1;
+	
 	/* Start switched process. */
 	do_iret (&_if);
 	NOT_REACHED ();
 }
+
+//rsp는 stack의 top 부분의 주소를 가르킴
+//argv는 문자열들의 배열: 주소의 주소를 나타냄.
+void argument_stack(char **argv, int argc, uint64_t *rsp) {
+    char *arg_ptrs[argc];
+
+    // 문자열 복사 (역순으로)
+    for (int i = argc - 1; i >= 0; i--) {
+        size_t len = strlen(argv[i]) + 1;
+        *rsp -= len;
+        memcpy((void *)*rsp, argv[i], len);
+        arg_ptrs[i] = (char *)*rsp;
+    }
+
+    // 8바이트 정렬
+    while (*rsp % 8 != 0) {
+        *rsp -= 1;
+        *(uint8_t *)(*rsp) = 0;
+    }
+
+    // NULL sentinel (argv[argc] = NULL)
+    *rsp -= sizeof(char *);
+    *(char **)(*rsp) = NULL;
+
+    // argv[i] 주소 push
+    for (int i = argc - 1; i >= 0; i--) {
+        *rsp -= sizeof(char *);
+        *(char **)(*rsp) = arg_ptrs[i];
+    }
+
+    // argv 포인터 자체 push (char **argv)
+    char **argv_addr = (char **)*rsp;
+    *rsp -= sizeof(char **);
+    *(char ***)(*rsp) = argv_addr;
+}
+
 
 
 /* Waits for thread TID to die and returns its exit status.  If
@@ -207,7 +275,9 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
-	return -1;
+	//임시방편, 다음과제에서 구현될 예정
+	for (int i = 0; i < 100000000; i++){}
+  	return -1;
 }
 
 /* Exit the process. This function is called by thread_exit (). */

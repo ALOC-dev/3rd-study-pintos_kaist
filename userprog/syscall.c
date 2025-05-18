@@ -14,7 +14,7 @@ void syscall_handler (struct intr_frame *);
 /* System call.
  *
  * Previously system call services was handled by the interrupt handler
- * (e.g. int 0x80 in linux). However, in x86-64, the manufacturer supplies
+ * (e.g. int 0x80 in l-inux). However, in x86-64, the manufacturer supplies
  * efficient path for requesting the system call, the `syscall` instruction.
  *
  * The syscall instruction works by reading the values from the the Model
