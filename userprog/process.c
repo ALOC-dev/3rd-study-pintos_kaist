@@ -38,6 +38,7 @@ process_init (void) {
  * before process_create_initd() returns. Returns the initd's
  * thread id, or TID_ERROR if the thread cannot be created.
  * Notice that THIS SHOULD BE CALLED ONCE. */
+//교재 : process_execute() = process_create_initd
 tid_t
 process_create_initd (const char *file_name) {
 	char *fn_copy;
@@ -51,7 +52,7 @@ process_create_initd (const char *file_name) {
 	strlcpy (fn_copy, file_name, PGSIZE);
 
 	/* Create a new thread to execute FILE_NAME. */
-	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
+	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy); //이전방식은 커맨드라인 string전체가 들어갔는데, 이제는 첫번째 토큰만 tokenizing해서 넘어감
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
 	return tid;
