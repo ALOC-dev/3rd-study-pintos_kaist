@@ -1,5 +1,3 @@
-#define USERPROG
-
 #include "userprog/process.h"
 #include <debug.h>
 #include <inttypes.h>
@@ -243,6 +241,7 @@ void argument_stack(char **parse, int count, void **rsp) {
     // 5. fake return address (0)
     *rsp -= sizeof(void *);
     *(void **)(*rsp) = 0;
+
 }
 
 
@@ -261,10 +260,7 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
-	  for (int i = 0; i < 100000000; i++){
-
-	  }
-	
+	while(1){};
 	 return -1;
 }
 
