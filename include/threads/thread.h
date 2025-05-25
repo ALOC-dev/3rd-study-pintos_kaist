@@ -99,6 +99,8 @@ struct thread {
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                     /* Page map level 4 */
+	// exit_status 추가
+	int exit_status; 
 #endif
 #ifdef VM
 	/* Table for whole virtual memory owned by thread. */
@@ -108,7 +110,6 @@ struct thread {
 	/* Owned by thread.c. */
 	struct intr_frame tf;               /* Information for switching */
 	unsigned magic;                     /* Detects stack overflow. */
-	int exit_status;
 };
 
 /* If false (default), use round-robin scheduler.

@@ -1,4 +1,3 @@
-#define USERPROG
 #include "userprog/syscall.h"
 #include <stdio.h>
 #include <syscall-nr.h>
@@ -8,6 +7,7 @@
 #include "userprog/gdt.h"
 #include "threads/flags.h"
 #include "intrinsic.h"
+
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -116,6 +116,32 @@ void exit(int status){
 	자식이 exit(status)로 종료할 때 전달한 status 값을 가져오기 위함입니다. */
 	thread_exit();
 }
+
+
+
+
+//파일을 생성하는 시스템 콜
+bool 
+create(const char *file, unsigned initial_size) 
+{
+    check_address(file);
+
+    return filesys_create(file, initial_size);
+}
+
+
+
+//파일을 삭제하는 시스템 콜
+bool 
+remove(const char *file) 
+{
+    check_address(file);
+
+    return filesys_remove(file);
+}
+
+
+
 
 
 void check_address(void* addr)
