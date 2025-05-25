@@ -1,3 +1,5 @@
+#define USERPROG
+
 #include "userprog/process.h"
 #include <debug.h>
 #include <inttypes.h>
@@ -49,6 +51,10 @@ process_create_initd (const char *file_name) {
 	if (fn_copy == NULL)
 		return TID_ERROR;
 	strlcpy (fn_copy, file_name, PGSIZE);
+
+	//Argument Passing
+	char *save_ptr;
+	strtok_r(file_name," ", &save_ptr);
 
 	/* Create a new thread to execute FILE_NAME. */
 	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
@@ -176,8 +182,25 @@ process_exec (void *f_name) {
 	/* We first kill the current context */
 	process_cleanup ();
 
+	//Argument passing~ tokenizing
+	char *parse[64];
+	char *token, *save_ptr;
+	int count = 0;
+	for(token=strtok_r(file_name," ", &save_ptr);token!=NULL;token=strtok_r(NULL," ",&save_ptr)){
+		parse[count++]=token;
+	}
+	//~end
+
 	/* And then load the binary */
 	success = load (file_name, &_if);
+	
+	//Argument passing~
+	argument_stack(parse,count,&_if.rsp);
+	_if.R.rdi=count;
+	_if.R.rsi=(char *)_if.rsp+8;
+
+	hex_dump(_if.rsp, _if.rsp, USER_STACK-(uint64_t)_if.rsp, true);
+	//~end
 
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
@@ -188,6 +211,40 @@ process_exec (void *f_name) {
 	do_iret (&_if);
 	NOT_REACHED ();
 }
+
+void argument_stack(char **parse, int count, void **rsp) {
+    char *arg_addr[count];
+
+    // 1. 인자 문자열들을 스택에 복사 (역순)
+    for (int i = count - 1; i >= 0; i--) {
+        int len = strlen(parse[i]) + 1; // '\0' 포함
+        *rsp -= len;
+        memcpy(*rsp, parse[i], len);
+        arg_addr[i] = *rsp; // 복사된 위치 저장
+    }
+
+    // 2. word-align (8바이트 정렬)
+    uintptr_t align = (uintptr_t)(*rsp) % 8;
+    if (align) {
+        *rsp -= align;
+        memset(*rsp, 0, align); // 정렬 패딩
+    }
+
+    // 3. argv[argc] = NULL sentinel
+    *rsp -= sizeof(char *);
+    *(char **)(*rsp) = NULL;
+
+    // 4. argv[i]들 주소 push
+    for (int i = count - 1; i >= 0; i--) {
+        *rsp -= sizeof(char *);
+        *(char **)(*rsp) = arg_addr[i];
+    }
+
+    // 5. fake return address (0)
+    *rsp -= sizeof(void *);
+    *(void **)(*rsp) = 0;
+}
+
 
 
 /* Waits for thread TID to die and returns its exit status.  If
@@ -204,7 +261,11 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
-	return -1;
+	  for (int i = 0; i < 100000000; i++){
+
+	  }
+	
+	 return -1;
 }
 
 /* Exit the process. This function is called by thread_exit (). */
