@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.inc": "c",
-        "atomic": "c"
+        "atomic": "c",
+        "inttypes.h": "c"
     }
 }

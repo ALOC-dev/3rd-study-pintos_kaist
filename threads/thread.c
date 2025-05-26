@@ -202,6 +202,9 @@ thread_create (const char *name, int priority,
 
 	/* Call the kernel_thread if it scheduled.
 	 * Note) rdi is 1st argument, and rsi is 2nd argument. */
+	//[Background] context switching할때, 어떻게 시작할지에 필요한 cpu상태를 초기화하는 부분
+	//아래 3줄이 실행되면 kernel_thread(function,aux)
+	//thread struct의 intr_frame의 요소를 초기화하는 부분
 	t->tf.rip = (uintptr_t) kernel_thread;
 	t->tf.R.rdi = (uint64_t) function;
 	t->tf.R.rsi = (uint64_t) aux;
