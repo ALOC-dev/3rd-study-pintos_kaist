@@ -1,4 +1,6 @@
+#define USERPROG
 #include "userprog/syscall.h"
+#include "threads/palloc.h"
 #include "filesys/filesys.h"
 #include <stdio.h>
 #include <syscall-nr.h>
@@ -18,7 +20,7 @@ void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
 void check_address(void* addr);
 
-/* System call.
+/* System call
  *
  * Previously system call services was handled by the interrupt handler
  * (e.g. int 0x80 in l-inux). However, in x86-64, the manufacturer supplies
@@ -51,56 +53,55 @@ syscall_init (void) {
 //순서는 rdi, rsi, rdx 순서대로 인자 값을 넣어주는 것이고 특별한 값이 있는게 아니다.
 /* The main system call interface */
 void syscall_handler (struct intr_frame *f UNUSED) {
+    int sys_number = f->R.rax;
 
-	/* rax = 시스템 콜 넘버 */
-	int sys_number = f->R.rax;
-	// TODO: Your implementation goes here.
-	switch (sys_number)
-	{
-		case SYS_HALT:
-			halt();
-			break;
-		case SYS_EXIT:
-			exit(f->R.rdi);
-			break;
-		case SYS_FORK:
-			fork(f->R.rdi);
-			break;
-		case SYS_WAIT:
-			wait(f->R.rdi);
-			break;
-		case SYS_CREATE:
-			create(f->R.rdi, f->R.rsi);
-			break;
-		case SYS_REMOVE:
-			remove(f->R.rdi);
-			break;
-		case SYS_OPEN:
-			open(f->R.rdi);
-			break;
-		case SYS_FILESIZE:
-			filesize(f->R.rdi);
-			break;
-		case SYS_READ:
-			read(f->R.rdi,f->R.rsi, f->R.rdx);
-			break;
-		case SYS_WRITE:
-			write(f->R.rdi,f->R.rsi, f->R.rdx);
-			break;
-		case SYS_SEEK:
-			seek(f->R.rdi, f->R.rsi);
-			break;
-		case SYS_TELL:
-			tell(f->R.rdi);
-			break;
-		case SYS_CLOSE:
-			close(f->R.rdi);
-			break;
-		default:
-			thread_exit();
-	}
+    switch (sys_number)
+    {
+        case SYS_HALT:
+            halt();
+            break;
+        case SYS_EXIT:
+            exit(f->R.rdi);
+            break;
+        case SYS_FORK:
+			f->R.rax = fork((const char *)f->R.rdi, f);  // 반환값 필요
+            break;
+        case SYS_WAIT:
+            f->R.rax = wait(f->R.rdi);  // 반환값 필요
+            break;
+        case SYS_CREATE:
+            f->R.rax = create(f->R.rdi, f->R.rsi);
+            break;
+        case SYS_REMOVE:
+            f->R.rax = remove(f->R.rdi);
+            break;
+        case SYS_OPEN:
+            f->R.rax = open(f->R.rdi);
+            break;
+        case SYS_FILESIZE:
+            f->R.rax = filesize(f->R.rdi);
+            break;
+        case SYS_READ:
+            f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
+            break;
+        case SYS_WRITE:
+            f->R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
+            break;
+        case SYS_SEEK:
+            seek(f->R.rdi, f->R.rsi);  // void
+            break;
+        case SYS_TELL:
+            f->R.rax = tell(f->R.rdi);
+            break;
+        case SYS_CLOSE:
+            close(f->R.rdi);
+            break;
+        default:
+            thread_exit();
+    }
 
-	printf ("system call!\n");
+    // 디버깅용 로그
+    // printf ("system call number: %d\n", sys_number);
 }
 
 
@@ -368,6 +369,31 @@ void close(int fd) {
     }
     
     thread_current()->fdt[fd] = NULL;
+}
+
+int exec(const char *file_name)
+{
+    check_address(file_name); // file_name 포인터가 유효한지 확인합니다.
+
+    char *file_name_copy = palloc_get_page(PAL_ZERO); // 페이지 할당을 통해 파일 이름을 복사할 메모리 공간을 얻습니다.
+    if (file_name_copy == NULL)
+        exit(-1); // 메모리 할당에 실패한 경우, -1을 반환하고 현재 프로세스를 종료합니다.
+
+    strlcpy(file_name_copy, file_name, PGSIZE); // file_name을 file_name_copy로 복사합니다. PGSIZE는 복사할 최대 크기를 나타냅니다.
+
+    if (process_exec(file_name_copy) == -1)
+        exit(-1); // process_exec 함수를 호출하여 파일을 실행합니다. 실행에 실패한 경우, -1을 반환하고 현재 프로세스를 종료합니다.
+}
+
+tid_t fork(const char *thread_name, struct intr_frame *f)
+{	
+	// 현재 프로세스를 포크하여 새로운 자식 프로세스를 생성하는 process_fork 함수를 호출하고 그 결과를 반환합니다.
+    return process_fork(thread_name, f); 
+}
+
+
+int wait(tid_t pid) {
+    return process_wait(pid);  // 내부 커널 로직 호출
 }
 
 
