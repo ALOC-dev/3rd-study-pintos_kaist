@@ -7,9 +7,14 @@
 #include "filesys/inode.h"
 #include "filesys/directory.h"
 #include "devices/disk.h"
+#include "threads/synch.h" 
 
 /* The disk that contains the file system. */
 struct disk *filesys_disk;
+
+
+/* Global file system lock */
+struct lock filesys_lock;  // 추가
 
 static void do_format (void);
 
@@ -17,6 +22,7 @@ static void do_format (void);
  * If FORMAT is true, reformats the file system. */
 void
 filesys_init (bool format) {
+	lock_init(&filesys_lock); // 추가
 	filesys_disk = disk_get (0, 1);
 	if (filesys_disk == NULL)
 		PANIC ("hd0:1 (hdb) not present, file system initialization failed");
