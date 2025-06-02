@@ -272,7 +272,10 @@ process_exit (void) {
 	 * TODO: Implement process termination message (see
 	 * TODO: project2/process_termination.html).
 	 * TODO: We recommend you to implement process resource cleanup here. */
-
+	//pml4가 NULL이면 커널스레드
+	if(curr->pml4 !=NULL){
+		printf("%s : exit(%d) \n", curr->name ,curr->exit_code);
+	}
 	process_cleanup ();
 }
 
